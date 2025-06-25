@@ -53,6 +53,8 @@ def create_search(top_left, bottom_right):
     search_queue = deque()
     search_queue.append((top_left, bottom_right))
 
+    yield MESSAGE_RECTANGLE, top_left, bottom_right
+
     # start search
     while len(search_queue) > 0:
         top_left, bottom_right = search_queue.popleft()
@@ -66,18 +68,17 @@ def create_search(top_left, bottom_right):
             print(f"Zero found! Estimated location: {estimated_zero:.6f}")
             print(f"  Rectangle: {top_left:.3f} to {bottom_right:.3f}")
             print(f"  Function value at estimate: {f(estimated_zero):.6f}")
-
-            yield MESSAGE_RECTANGLE, top_left, bottom_right
             
             # Only split if rectangle is large enough
             width = abs(bottom_right.real - top_left.real)
             height = abs(top_left.imag - bottom_right.imag)
 
-            if width > MIN_SIZE and height > MIN_SIZE:
+            if width > MIN_SIZE or height > MIN_SIZE:
                 rectangles = split_rectangle_at_longest_size(top_left, bottom_right)
                 if rectangles:
                     for rectangle in rectangles:
                         search_queue.append(rectangle)
+                        yield MESSAGE_RECTANGLE, rectangle[0], rectangle[1]
         else:
             yield MESSAGE_FILLED_RECTANGLE, top_left, bottom_right
     yield MESSAGE_END, None, None

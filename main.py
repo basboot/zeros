@@ -16,12 +16,12 @@ RIGHT_PLOT_XLIM = (-20, 20)
 RIGHT_PLOT_YLIM = (-20, 20)
 FIGURE_SIZE = (8, 4)
 
-ANIMATION_SPEED = 16
+ANIMATION_SPEED = 0
 
 # Algorithm constants
-MIN_SIZE = 0.05
+MIN_SIZE = 0.5
 
-MESSAGE_PATH, MESSAGE_RECTANGLE, MESSAGE_FILLED_RECTANGLE = 0, 1, 2
+MESSAGE_PATH, MESSAGE_RECTANGLE, MESSAGE_FILLED_RECTANGLE, MESSAGE_END = 0, 1, 2, 3
 
 # TODO: add messages to show rectangles
 # TODO: add real search
@@ -80,6 +80,7 @@ def create_search(top_left, bottom_right):
                         search_queue.append(rectangle)
         else:
             yield MESSAGE_FILLED_RECTANGLE, top_left, bottom_right
+    yield MESSAGE_END, None, None
 
 
 def create_animated_plot():
@@ -141,15 +142,16 @@ def create_animated_plot():
     rectangles = []
     filled_rectangles = []
     filled_patches = []  # Store Rectangle patches for filled rectangles
+    rectangle_patches = {}  # Store outline Rectangle patches for rectangles
     
     def animate(frame):
         try:
-            # TODO: we can yield instructions here to delete parts too, or add 'breakpoints', or
-            #  commands to add rectangles etc...
             # generate next points, until done
 
             next_point = None
             message_type, message_value1, message_value2 = next(search_gen)
+
+            # TODO: add done message to remove current_point
 
             if message_type == MESSAGE_PATH:
                 next_point = message_value1
@@ -157,21 +159,30 @@ def create_animated_plot():
             elif message_type == MESSAGE_RECTANGLE:
                 accumulated_points.clear()
                 rectangles.append((message_value1, message_value2))
+                # Add outline rectangle patch if not already present
+                key = (message_value1, message_value2)
+                if key not in rectangle_patches:
+                    x = message_value1.real
+                    y = message_value1.imag
+                    width = message_value2.real - message_value1.real
+                    height = message_value2.imag - message_value1.imag
+                    rect_patch = plt.Rectangle((x, y), width, height, fill=False, edgecolor='#222', linewidth=1, zorder=0.5)
+                    ax1.add_patch(rect_patch)
+                    rectangle_patches[key] = rect_patch
+                # TODO: implement with dictionary, also add message to remove rectangle again
             elif message_type == MESSAGE_FILLED_RECTANGLE:
                 accumulated_points.clear()
                 filled_rectangles.append((message_value1, message_value2))
+            elif message_type == MESSAGE_END:
+                accumulated_points.clear()
+                print("END ANIMATION")
 
         except StopIteration:
             pass
 
-        # TODO: do not remove, just add new patches
-        # Remove old filled rectangle patches
-        for patch in filled_patches:
-            patch.remove()
-        filled_patches.clear()
-
-        # Draw filled black rectangles on the left plot
-        for top_left, bottom_right in filled_rectangles:
+        # Only add new filled rectangle patches
+        for i in range(len(filled_patches), len(filled_rectangles)):
+            top_left, bottom_right = filled_rectangles[i]
             x = top_left.real
             y = top_left.imag
             width = bottom_right.real - top_left.real
@@ -201,8 +212,14 @@ def create_animated_plot():
             current_point_right.set_offsets([[projection.real, projection.imag]])
             projection_color = position_to_color(projection)
             current_point_right.set_color([projection_color])
+        else:
+            # Hide the current point and accumulated points
+            scatter_left.set_offsets(np.empty((0, 2)))
+            current_point_left.set_offsets(np.empty((0, 2)))
+            current_point_right.set_offsets(np.empty((0, 2)))
 
-        return [scatter_left, current_point_left, current_point_right] + filled_patches
+        # Return all artists including outline rectangles
+        return [scatter_left, current_point_left, current_point_right] + filled_patches + list(rectangle_patches.values())
     
     # Create animation with explicit cache_frame_data=False for unknown length
     anim = animation.FuncAnimation(

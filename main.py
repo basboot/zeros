@@ -128,8 +128,8 @@ def create_animated_plot():
     # ax1.scatter(root_x, root_y, c='red', marker='x', s=100, linewidths=3, label='Theoretical roots', zorder=10)
     
     # Create scatter plot objects for left subplot
-    scatter_left = ax1.scatter([], [], s=2, alpha=0.7, label='Search points')
-    current_point_left = ax1.scatter([], [], s=20, label='Current point', zorder=5)
+    scatter_left = ax1.scatter([], [], s=5, alpha=0.7, label='Search points')
+    current_point_left = ax1.scatter([], [], s=30, label='Current point', zorder=5)
     
     # Create scatter plot object for right subplot (current point only)
     current_point_right = ax2.scatter([], [], s=100, zorder=5)
@@ -211,6 +211,7 @@ def create_animated_plot():
             # Update right subplot - show projection of f(point)
             projection = f(accumulated_points[-1])
             current_point_right.set_offsets([[projection.real, projection.imag]])
+            # TODO: check syntax
             projection_color = tuple(max(0, c - 0.2) for c in position_to_color(projection))
             current_point_right.set_color([projection_color])
         else:

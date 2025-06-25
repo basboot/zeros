@@ -7,7 +7,7 @@ import colorsys
 
 from helper import get_theoretical_roots, winding_number, create_rectangle_path, split_rectangle_at_longest_size
 
-SCALE_MAGNITUDE_FOR_LIGHTNESS = 0.075 # avoid everything being white
+SCALE_MAGNITUDE_FOR_LIGHTNESS = 1 # avoid everything being white
 
 # Plot size constants
 LEFT_PLOT_XLIM = (-1.3, 1.3)
@@ -16,7 +16,7 @@ RIGHT_PLOT_XLIM = (-20, 20)
 RIGHT_PLOT_YLIM = (-20, 20)
 FIGURE_SIZE = (8, 4)
 
-ANIMATION_SPEED = 0
+ANIMATION_SPEED = 16
 
 # Algorithm constants
 MIN_SIZE = 0.5
@@ -42,7 +42,7 @@ def position_to_color(z):
     assert isinstance(z, complex), "Input z must be a complex number"
     magnitude = np.abs(z)
     angle = -np.angle(z, True) # use degrees for easier calculations
-    lightness = np.tanh(magnitude * SCALE_MAGNITUDE_FOR_LIGHTNESS)
+    lightness = np.tanh(magnitude * SCALE_MAGNITUDE_FOR_LIGHTNESS) * 0.7
 
     # convert angle from -180, 180 to 0-1 range for hue
     hue = ((angle + 360) % 360) / 360  
@@ -210,7 +210,7 @@ def create_animated_plot():
             # Update right subplot - show projection of f(point)
             projection = f(accumulated_points[-1])
             current_point_right.set_offsets([[projection.real, projection.imag]])
-            projection_color = position_to_color(projection)
+            projection_color = tuple(max(0, c - 0.2) for c in position_to_color(projection))
             current_point_right.set_color([projection_color])
         else:
             # Hide the current point and accumulated points

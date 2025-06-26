@@ -10,11 +10,13 @@ from helper import get_theoretical_roots, winding_number, create_rectangle_path,
 SCALE_MAGNITUDE_FOR_LIGHTNESS = 1 # avoid everything being white
 
 # Plot size constants
-LEFT_PLOT_XLIM = (-1.3, 1.3)
-LEFT_PLOT_YLIM = (-1.3, 1.3)
-RIGHT_PLOT_XLIM = (-20, 20)
-RIGHT_PLOT_YLIM = (-20, 20)
-FIGURE_SIZE = (8, 4)
+DOMAIN_XLIM = (-10, 2)
+DOMAIN_YLIM = (-16, 16)
+DOMAIN_PLOT_PADDING = 0.5
+PROJECTION_XLIM = (-20, 20)
+PROJECTION_YLIM = (-20, 20)
+PROJECTION_PLOT_PADDING = 0.5
+FIGURE_SIZE = (16, 8)
 
 ANIMATION_SPEED = 16
 
@@ -91,22 +93,29 @@ def create_animated_plot():
     fig.suptitle('Complex Roots of z⁵ - 2', fontsize=14, y=0.95)
     
     # Left subplot - accumulated search pattern
-    ax1.set_xlim(*LEFT_PLOT_XLIM)
-    ax1.set_ylim(*LEFT_PLOT_YLIM)
+    ax1.set_xlim(DOMAIN_XLIM[0] - DOMAIN_PLOT_PADDING, DOMAIN_XLIM[1] + DOMAIN_PLOT_PADDING)
+    ax1.set_ylim(DOMAIN_YLIM[0] - DOMAIN_PLOT_PADDING, DOMAIN_YLIM[1] + DOMAIN_PLOT_PADDING)
+    ticks = list(np.arange(DOMAIN_XLIM[0], DOMAIN_XLIM[1] + 2, step=2))
+    ticks.append(0.5)
+    ticks.remove(0)
+    ticks.sort()
+    ax1.set_xticks(ticks)
     ax1.grid(True, alpha=0.3)
     ax1.set_aspect('equal')
     ax1.set_title('Domain')
+
+
     
     # Right subplot - current point only
-    ax2.set_xlim(*RIGHT_PLOT_XLIM)
-    ax2.set_ylim(*RIGHT_PLOT_YLIM)
+    ax2.set_xlim(PROJECTION_XLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_XLIM[1] + PROJECTION_PLOT_PADDING)
+    ax2.set_ylim(PROJECTION_YLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_YLIM[1] + PROJECTION_PLOT_PADDING)
     ax2.grid(True, alpha=0.3)
     ax2.set_aspect('equal')
     ax2.set_title('Projection')
     
     # Create HSL background gradient for right subplot
-    x_range = np.linspace(*RIGHT_PLOT_XLIM, 200)
-    y_range = np.linspace(*RIGHT_PLOT_YLIM, 200)
+    x_range = np.linspace(*PROJECTION_XLIM, 200)
+    y_range = np.linspace(*PROJECTION_YLIM, 200)
     X, Y = np.meshgrid(x_range, y_range)
     
     # Create color array for background with better scaling
@@ -119,7 +128,7 @@ def create_animated_plot():
             background_colors[i, j] = color
     
     # Display background gradient
-    ax2.imshow(background_colors, extent=[*RIGHT_PLOT_XLIM, *RIGHT_PLOT_YLIM], origin='lower', alpha=0.8)
+    ax2.imshow(background_colors, extent=[PROJECTION_XLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_XLIM[1] + PROJECTION_PLOT_PADDING, PROJECTION_YLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_YLIM[1] + PROJECTION_PLOT_PADDING], origin='lower', alpha=0.8)
     
     # Plot theoretical roots as red crosses
     # theoretical_roots = get_theoretical_roots()
@@ -128,8 +137,8 @@ def create_animated_plot():
     # ax1.scatter(root_x, root_y, c='red', marker='x', s=100, linewidths=3, label='Theoretical roots', zorder=10)
     
     # Create scatter plot objects for left subplot
-    scatter_left = ax1.scatter([], [], s=5, alpha=0.7, label='Search points')
-    current_point_left = ax1.scatter([], [], s=30, label='Current point', zorder=5)
+    scatter_left = ax1.scatter([], [], s=15, alpha=0.7, label='Search points')
+    current_point_left = ax1.scatter([], [], s=50, label='Current point', zorder=5)
     
     # Create scatter plot object for right subplot (current point only)
     current_point_right = ax2.scatter([], [], s=100, zorder=5)
@@ -137,7 +146,8 @@ def create_animated_plot():
     # Add legend to left subplot
 
     # Create circle generator and storage for accumulated points
-    search_gen = create_search(complex(LEFT_PLOT_XLIM[0] * 0.95 , LEFT_PLOT_YLIM[0] * 0.95), complex(LEFT_PLOT_XLIM[1] * 0.95, LEFT_PLOT_YLIM[1] * 0.95))
+    # add small offsets to avoid whole rectangles exactly on integers
+    search_gen = create_search(complex(DOMAIN_XLIM[0] - random() * 0.1, DOMAIN_YLIM[0] - random() * 0.1), complex(DOMAIN_XLIM[1] + random() * 0.1, DOMAIN_YLIM[1]) + random() * 0.1)
     accumulated_points = []
 
     rectangles = []

@@ -13,13 +13,13 @@ from helper import get_theoretical_roots, winding_number, create_rectangle_path,
 SCALE_MAGNITUDE_FOR_LIGHTNESS = 1 # avoid everything being white
 
 # Plot size constants
-DOMAIN_XLIM = (-10, 2)
-DOMAIN_YLIM = (-16, 16)
-DOMAIN_PLOT_PADDING = 0.5
+DOMAIN_XLIM = (-1.25, 1.25)
+DOMAIN_YLIM = (-1.25, 1.25)
+DOMAIN_PLOT_PADDING = 0.25
 PROJECTION_XLIM = (-20, 20)
 PROJECTION_YLIM = (-20, 20)
-PROJECTION_PLOT_PADDING = 0.5
-FIGURE_SIZE = (16, 8)
+PROJECTION_PLOT_PADDING = 0
+FIGURE_SIZE = (8, 4)
 
 ANIMATION_SPEED = 16
 
@@ -40,8 +40,8 @@ def is_zero_inside(rectangle):
 
 # the function to find the zeros for
 def f(z):
-    return zeta(z)
-    #return z**5 - 2
+    # return zeta(z)
+    return z**5 - 2
 
 
 def position_to_color(z):
@@ -99,11 +99,11 @@ def create_animated_plot():
     # Left subplot - accumulated search pattern
     ax1.set_xlim(DOMAIN_XLIM[0] - DOMAIN_PLOT_PADDING, DOMAIN_XLIM[1] + DOMAIN_PLOT_PADDING)
     ax1.set_ylim(DOMAIN_YLIM[0] - DOMAIN_PLOT_PADDING, DOMAIN_YLIM[1] + DOMAIN_PLOT_PADDING)
-    ticks = list(np.arange(DOMAIN_XLIM[0], DOMAIN_XLIM[1] + 2, step=2))
-    ticks.append(0.5)
-    ticks.remove(0)
-    ticks.sort()
-    ax1.set_xticks(ticks)
+    # ticks = list(np.arange(DOMAIN_XLIM[0], DOMAIN_XLIM[1] + 2, step=2))
+    # ticks.append(0.5)
+    # ticks.remove(0)
+    # ticks.sort()
+    # ax1.set_xticks(ticks)
     ax1.grid(True, alpha=0.3)
     ax1.set_aspect('equal')
     ax1.set_title('Domain')

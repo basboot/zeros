@@ -6,16 +6,17 @@ import matplotlib.animation as animation
 import numpy as np
 import colorsys
 
-from scipy.special import zeta
-
-from helper import get_theoretical_roots, winding_number, create_rectangle_path, split_rectangle_at_longest_size
+from helper import get_theoretical_roots, winding_number, create_rectangle_path, split_rectangle_at_longest_size, \
+    is_point_inside_rectangle
 
 SCALE_MAGNITUDE_FOR_LIGHTNESS = 1 # avoid everything being white
+
+LABEL_ZEROS = True
 
 # Plot size constants
 DOMAIN_XLIM = (-1.25, 1.25)
 DOMAIN_YLIM = (-1.25, 1.25)
-DOMAIN_PLOT_PADDING = 0.25
+DOMAIN_PLOT_PADDING = 0.5
 PROJECTION_XLIM = (-20, 20)
 PROJECTION_YLIM = (-20, 20)
 PROJECTION_PLOT_PADDING = 0
@@ -26,23 +27,11 @@ ANIMATION_SPEED = 16
 # Algorithm constants
 MIN_SIZE = 0.1
 
-MESSAGE_PATH, MESSAGE_RECTANGLE, MESSAGE_FILLED_RECTANGLE, MESSAGE_END = 0, 1, 2, 3
-
-# TODO: add messages to show rectangles
-# TODO: add real search
-
-# check if zero is inside the projected rectangle
-def is_zero_inside(rectangle):
-    projected_rectangle = [f(point) for point in rectangle]
-    
-    # Check winding number around origin using the full transformed perimeter
-    return abs(winding_number(projected_rectangle)) > 0
+MESSAGE_PATH, MESSAGE_RECTANGLE, MESSAGE_FILLED_RECTANGLE, MESSAGE_END, MESSAGE_ZERO = 0, 1, 2, 3, 5
 
 # the function to find the zeros for
 def f(z):
-    # return zeta(z)
     return z**5 - 2
-
 
 def position_to_color(z):
     assert isinstance(z, complex), "Input z must be a complex number"
@@ -59,21 +48,30 @@ def create_search(top_left, bottom_right):
     search_queue = deque()
     search_queue.append((top_left, bottom_right))
 
-    yield MESSAGE_RECTANGLE, top_left, bottom_right
+    yield MESSAGE_RECTANGLE, top_left, bottom_right, None
 
     # start search
     while len(search_queue) > 0:
         top_left, bottom_right = search_queue.popleft()
         rectangle_points = create_rectangle_path(top_left, bottom_right)
         
-        yield from [(MESSAGE_PATH, point, None) for point in rectangle_points]
+        yield from [(MESSAGE_PATH, point, None, None) for point in rectangle_points]
 
         # Check if zero is inside this rectangle
-        if is_zero_inside(rectangle_points):
+
+        projected_rectangle = [f(point) for point in rectangle_points]
+
+        # check if zero is inside the projected rectangle
+        n_zeros = abs(winding_number(projected_rectangle))
+
+
+        if n_zeros > 0:
             estimated_zero = (top_left + bottom_right) / 2
             print(f"Zero found! Estimated location: {estimated_zero:.6f}")
             print(f"  Rectangle: {top_left:.3f} to {bottom_right:.3f}")
             print(f"  Function value at estimate: {f(estimated_zero):.6f}")
+
+            yield MESSAGE_ZERO, n_zeros, top_left, bottom_right
             
             # Only split if rectangle is large enough
             width = abs(bottom_right.real - top_left.real)
@@ -84,10 +82,10 @@ def create_search(top_left, bottom_right):
                 if rectangles:
                     for rectangle in rectangles:
                         search_queue.append(rectangle)
-                        yield MESSAGE_RECTANGLE, rectangle[0], rectangle[1]
+                        yield MESSAGE_RECTANGLE, rectangle[0], rectangle[1], None
         else:
-            yield MESSAGE_FILLED_RECTANGLE, top_left, bottom_right
-    yield MESSAGE_END, None, None
+            yield MESSAGE_FILLED_RECTANGLE, top_left, bottom_right, None
+    yield MESSAGE_END, None, None, None
 
 
 def create_animated_plot():
@@ -108,8 +106,6 @@ def create_animated_plot():
     ax1.set_aspect('equal')
     ax1.set_title('Domain')
 
-
-    
     # Right subplot - current point only
     ax2.set_xlim(PROJECTION_XLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_XLIM[1] + PROJECTION_PLOT_PADDING)
     ax2.set_ylim(PROJECTION_YLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_YLIM[1] + PROJECTION_PLOT_PADDING)
@@ -159,12 +155,16 @@ def create_animated_plot():
     filled_patches = []  # Store Rectangle patches for filled rectangles
     rectangle_patches = {}  # Store outline Rectangle patches for rectangles
     
+    # Storage for dynamic annotations
+    frame_annotations = {}  # Dict to store all frame annotations
+    
     def animate(frame):
+        
         try:
             # generate next points, until done
 
             next_point = None
-            message_type, message_value1, message_value2 = next(search_gen)
+            message_type, message_value1, message_value2, message_value3 = next(search_gen)
 
             # TODO: add done message to remove current_point
 
@@ -191,6 +191,30 @@ def create_animated_plot():
             elif message_type == MESSAGE_END:
                 accumulated_points.clear()
                 print("END ANIMATION")
+            elif message_type == MESSAGE_ZERO and LABEL_ZEROS:
+                top_left, bottom_right = message_value2, message_value3
+                estimated_zero = (top_left + bottom_right) / 2
+
+                print(f"{message_value1} zeros at {estimated_zero}")
+
+                # possibly cleanup annotation about the same zero(s)
+                for tl, br in list(frame_annotations.keys()): # use list, because we mutate the dict
+                    if is_point_inside_rectangle(estimated_zero, tl, br):
+                        del frame_annotations[(tl, br)]
+
+                new_annotation = ax1.annotate(
+                    f"{message_value1} zeros" if message_value1 > 1 else f"{estimated_zero.real:.2f}{estimated_zero.imag:+.2f}j",
+                    xy=(estimated_zero.real, estimated_zero.imag),
+                    xytext=(estimated_zero.real + 0.25, estimated_zero.imag + 0.25),
+                    arrowprops=dict(arrowstyle='-', color='gray', lw=1),
+                    bbox=dict(boxstyle="round,pad=0.4", facecolor='#ffff99', edgecolor='#cccc00', alpha=0.9),
+                    fontsize=9,
+                    ha='center',
+                    zorder=10
+                )
+                frame_annotations[(top_left, bottom_right)] = new_annotation
+
+
 
         except StopIteration:
             pass
@@ -234,8 +258,8 @@ def create_animated_plot():
             current_point_left.set_offsets(np.empty((0, 2)))
             current_point_right.set_offsets(np.empty((0, 2)))
 
-        # Return all artists including outline rectangles
-        return [scatter_left, current_point_left, current_point_right] + filled_patches + list(rectangle_patches.values())
+        # Return all artists including outline rectangles and frame annotations
+        return [scatter_left, current_point_left, current_point_right] + filled_patches + list(rectangle_patches.values()) + list(frame_annotations.values())
     
     # Create animation with explicit cache_frame_data=False for unknown length
     anim = animation.FuncAnimation(

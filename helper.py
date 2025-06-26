@@ -94,3 +94,25 @@ def split_rectangle_at_longest_size(top_left, bottom_right):
         return [(top_left, complex(bottom_right.real, mid)),
                 (complex(top_left.real, mid), bottom_right)]
 
+# (-1.2544984474103784-1.2949295800668543j)
+# (1.32021581008161+1.25j)
+# (-0.6108198830373813-0.022464790033427162j)
+
+def is_point_inside_rectangle(point, top_left, bottom_right):
+    x = point.real
+    y = point.imag
+
+    left = min(top_left.real, bottom_right.real)
+    right = max(top_left.real, bottom_right.real)
+    bottom = min(top_left.imag, bottom_right.imag)
+    top = max(top_left.imag, bottom_right.imag)
+
+    return left <= x <= right and bottom <= y <= top
+
+if __name__ == '__main__':
+    tl = (-1.2544984474103784-1.2949295800668543j)
+    br = (1.32021581008161+1.25j)
+    point = (-0.6108198830373813-0.022464790033427162j)
+
+    print(is_point_inside_rectangle(point, tl, br))
+

@@ -1,5 +1,7 @@
 .idea
 
+*.pyc
+
 # Created by https://www.toptal.com/developers/gitignore/api/venv,node,visualstudiocode,macos,jetbrains+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=venv,node,visualstudiocode,macos,jetbrains+all
 

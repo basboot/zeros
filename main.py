@@ -1,9 +1,12 @@
 from collections import deque
+from random import random
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 import colorsys
+
+from scipy.special import zeta
 
 from helper import get_theoretical_roots, winding_number, create_rectangle_path, split_rectangle_at_longest_size
 
@@ -37,7 +40,8 @@ def is_zero_inside(rectangle):
 
 # the function to find the zeros for
 def f(z):
-    return z**5 - 2
+    return zeta(z)
+    #return z**5 - 2
 
 
 def position_to_color(z):

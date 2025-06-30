@@ -57,13 +57,9 @@ def create_search(top_left, bottom_right):
         
         yield from [(MESSAGE_PATH, point, None, None) for point in rectangle_points]
 
-        # Check if zero is inside this rectangle
-
-        projected_rectangle = [f(point) for point in rectangle_points]
-
         # check if zero is inside the projected rectangle
+        projected_rectangle = [f(point) for point in rectangle_points]
         n_zeros = abs(winding_number(projected_rectangle))
-
 
         if n_zeros > 0:
             estimated_zero = (top_left + bottom_right) / 2
@@ -104,20 +100,19 @@ def create_animated_plot():
     # ax1.set_xticks(ticks)
     ax1.grid(True, alpha=0.3)
     ax1.set_aspect('equal')
-    ax1.set_title('Domain')
+    ax1.set_title(r'$z$')
 
     # Right subplot - current point only
     ax2.set_xlim(PROJECTION_XLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_XLIM[1] + PROJECTION_PLOT_PADDING)
     ax2.set_ylim(PROJECTION_YLIM[0] - PROJECTION_PLOT_PADDING, PROJECTION_YLIM[1] + PROJECTION_PLOT_PADDING)
     ax2.grid(True, alpha=0.3)
     ax2.set_aspect('equal')
-    ax2.set_title('Projection')
+    ax2.set_title(r'$f(z)$')
     
     # Create HSL background gradient for right subplot
     x_range = np.linspace(*PROJECTION_XLIM, 200)
     y_range = np.linspace(*PROJECTION_YLIM, 200)
-    X, Y = np.meshgrid(x_range, y_range)
-    
+
     # Create color array for background with better scaling
     background_colors = np.zeros((len(y_range), len(x_range), 3))
     for i, y in enumerate(y_range):  # Don't reverse y here, let imshow handle orientation
@@ -162,11 +157,8 @@ def create_animated_plot():
         
         try:
             # generate next points, until done
-
             next_point = None
             message_type, message_value1, message_value2, message_value3 = next(search_gen)
-
-            # TODO: add done message to remove current_point
 
             if message_type == MESSAGE_PATH:
                 next_point = message_value1
@@ -184,7 +176,6 @@ def create_animated_plot():
                     rect_patch = plt.Rectangle((x, y), width, height, fill=False, edgecolor='#222', linewidth=1, zorder=0.5)
                     ax1.add_patch(rect_patch)
                     rectangle_patches[key] = rect_patch
-                # TODO: implement with dictionary, also add message to remove rectangle again
             elif message_type == MESSAGE_FILLED_RECTANGLE:
                 accumulated_points.clear()
                 filled_rectangles.append((message_value1, message_value2))
@@ -213,8 +204,6 @@ def create_animated_plot():
                     zorder=10
                 )
                 frame_annotations[(top_left, bottom_right)] = new_annotation
-
-
 
         except StopIteration:
             pass
@@ -249,7 +238,6 @@ def create_animated_plot():
             # Update right subplot - show projection of f(point)
             projection = f(accumulated_points[-1])
             current_point_right.set_offsets([[projection.real, projection.imag]])
-            # TODO: check syntax
             projection_color = tuple(max(0, c - 0.2) for c in position_to_color(projection))
             current_point_right.set_color([projection_color])
         else:

@@ -6,6 +6,8 @@ import matplotlib.animation as animation
 import numpy as np
 import colorsys
 
+from scipy.special import zeta
+
 from helper import get_theoretical_roots, winding_number, create_rectangle_path, split_rectangle_at_longest_size, \
     is_point_inside_rectangle
 
@@ -14,24 +16,25 @@ SCALE_MAGNITUDE_FOR_LIGHTNESS = 1 # avoid everything being white
 LABEL_ZEROS = True
 
 # Plot size constants
-DOMAIN_XLIM = (-1.25, 1.25)
-DOMAIN_YLIM = (-1.25, 1.25)
+DOMAIN_XLIM = (-30, 30)
+DOMAIN_YLIM = (10, 60)
 DOMAIN_PLOT_PADDING = 0.5
-PROJECTION_XLIM = (-20, 20)
-PROJECTION_YLIM = (-20, 20)
+PROJECTION_XLIM = (-2000, 2000)
+PROJECTION_YLIM = (-2000, 2000)
 PROJECTION_PLOT_PADDING = 0
-FIGURE_SIZE = (8, 4)
+FIGURE_SIZE = (12, 6)
 
-ANIMATION_SPEED = 16
+ANIMATION_SPEED = 0
 
 # Algorithm constants
-MIN_SIZE = 0.1
+MIN_SIZE = 0.025
 
 MESSAGE_PATH, MESSAGE_RECTANGLE, MESSAGE_FILLED_RECTANGLE, MESSAGE_END, MESSAGE_ZERO = 0, 1, 2, 3, 5
 
 # the function to find the zeros for
 def f(z):
-    return z**5 - 2
+    return zeta(z)
+    # return z**5 - 2
 
 def position_to_color(z):
     assert isinstance(z, complex), "Input z must be a complex number"

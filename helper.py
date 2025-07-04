@@ -2,7 +2,7 @@ import numpy as np
 import cmath
 from scipy.special import gamma
 
-STEP_SIZE = 0.025  # step size of the rectangles
+STEP_SIZE = 0.25  # step size of the rectangles
 
 
 # calculate roots of z^5 - 2 for visual inspection
